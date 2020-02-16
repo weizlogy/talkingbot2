@@ -1,0 +1,172 @@
+using PyCall, Twitter, HTTP
+
+# JUMANPPをPyCall経由で
+juman = pyimport("pyknp")
+jumanpp = juman.Juman()
+
+# グローバル辞書
+gDict = Dict()
+
+#=
+ 辞書を作る
+=#
+function createDic(dict::Dict, txt::AbstractString)
+  # JUMAPで形態素解析
+  words = jumanpp.analysis(txt)
+
+  # 見出しの配列化（前後にBOS / EOSを入れる）
+  words2 = []
+  push!(words2, "BOS")
+  for index in 1:length(words)
+    push!(words2, get(words, index - 1).midasi)
+  end
+  push!(words2, "EOS")
+
+  words = words2
+
+  # ２ペアで辞書化
+  elementCount = 2
+  for index in 1:length(words) - elementCount
+    key = getindex(words, index)
+    value = getindex(words, index + 1)
+
+    # println(key * " / " * value)
+
+    if haskey(dict, key)
+      dict[key] = push!(dict[key], value)
+    else
+      dict[key] = [value]
+    end
+  end
+
+  return dict
+end
+
+#=
+ 辞書を使って文書生成する
+=#
+function markovtext(maxchlen::Integer, key::String)
+  dict = gDict
+
+  if haskey(dict, key) == false
+    key = "BOS"
+  end
+
+  keytext = key
+  valuetext = replace(rand(dict[keytext]), r"EOS" => "")
+  outtext = "" # valuetext
+
+  println("[$(keytext)] -> [$(valuetext)]")
+
+  while length(outtext) < maxchlen
+    outtext = outtext * keytext
+
+    if haskey(dict, keytext) == false
+      println("[$(keytext)] not found...")
+      break
+    end
+    keytext = rand(collect(dict[keytext]))
+    print("[$(keytext)] -> ")
+
+    if keytext == "EOS"
+      println("")
+      break
+    end
+
+    if haskey(dict, keytext) == false
+      outtext = outtext * keytext
+      println("[$(keytext)] not found...")
+      break
+    end
+    valuetext = rand(dict[keytext])
+
+    println("[$(valuetext)]")
+
+    if valuetext == "EOS"
+      #break
+    end
+  end
+
+  outtext = replace(outtext, r"BOS" => "")
+
+  return outtext
+end
+
+function corpus2Dic()
+  @time for tweet in eachline("corpus.txt")
+    # tweet = corpus[index]
+    tweet = replace(tweet, r"(https?://t.co/[a-zA-Z]+)|(@.+? )|(ξ.+?Ҙ)|([ -/:-@\[-~])" => "")
+    lines = split(tweet, "\n")
+
+    for index2 in 1:length(lines)
+      createDic(gDict, lines[index2])
+    end
+  end
+end
+
+# Twitter認証
+twitterauth(ENV["CONSUMER_KEY"], ENV["CONSUMER_SECRET"], ENV["ACCESS_TOKEN"], ENV["ACCESS_TOKEN_SECRET"])
+
+### REST API ENDPOINT ###
+
+# /mcmc
+# QUERYPARAMS
+#  p: post tweet
+#  l: load dictionary
+function mcmc(req::HTTP.Request)
+  params = HTTP.queryparams(parse(HTTP.URI, req.target))
+
+  @time gentext = markovtext(140, "BOS") * "\n"
+
+  if params["p"] == "1"
+    println("tweet")
+    post_status_update(status = gentext)
+  end
+
+  return gentext
+end
+
+# /reply
+# QUERYPARAMS
+#  p: post tweet
+#  t: text
+function reply(req::HTTP.Request)
+  params = HTTP.queryparams(parse(HTTP.URI, req.target))
+
+  println( params["t"] )
+  @time gentext = markovtext(140, String(params["t"])) * "\n"
+
+  if params["p"] == "1"
+    post_status_update(status = gentext)
+  end
+
+  return gentext
+end
+
+# /dictionary
+# QUERYPARAMS
+function dictionary(req::HTTP.Request)
+  params = HTTP.queryparams(parse(HTTP.URI, req.target))
+
+  corpus2Dic()
+
+  return ""
+end
+
+### メイン処理 ###
+
+# 初回読み込み
+corpus2Dic()
+
+# エンドポイント作成
+const ROUTER = HTTP.Router()
+HTTP.@register(ROUTER, "POST", "/mcmc", mcmc)
+HTTP.@register(ROUTER, "POST", "/reply", reply)
+HTTP.@register(ROUTER, "POST", "/dict", dictionary)
+
+HTTP.serve(ROUTER, "127.0.0.1", 8000)
+
+# @time gentext = markovtext(200, "BOS")
+
+# println("")
+# println(gentext)

@@ -1,0 +1,47 @@
+# ===
+# コーパス作成処理
+# ===
+
+using Twitter
+
+
+# Twitter認証
+twitterauth(ENV["CONSUMER_KEY"], ENV["CONSUMER_SECRET"], ENV["ACCESS_TOKEN"], ENV["ACCESS_TOKEN_SECRET"])
+
+# 最新のIDを取得
+maxid = open(f->read(f, String), "maxid.txt")
+println("maxid = " * maxid)
+
+# 自分のTLを取得する
+if maxid == ""
+  @time timeline =
+    get_user_timeline(
+      screen_name = "twilightalpaca", count = 200, tweet_mode = "extended")
+else
+  @time timeline =
+    get_user_timeline(
+      screen_name = "twilightalpaca", count = 200, since_id = maxid, tweet_mode = "extended")
+end
+print( "$(length(timeline)) -> " )
+
+# 最新のIDを保存
+if length(timeline) > 0
+  open("maxid.txt", "w") do io
+    print(io, timeline[1].id)
+  end
+end
+
+# 不要なもののフィルター
+filter!(x -> x.source != "<a href=\"https://codepen.io/weizlogy/full/LgjJYb\" rel=\"nofollow\">Talking with Alpaca</a>" && !x.retweeted, timeline)
+# 
+corpus = (x -> x.full_text).(timeline)
+
+# ファイル化
+if length(corpus) > 0
+  open("corpus.txt", "a") do io
+    for index in 1:length(corpus)
+      println(io, corpus[index])
+    end
+  end
+end
+println( "$(length(corpus))" )
