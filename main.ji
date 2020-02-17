@@ -123,7 +123,7 @@ function mcmc(req::HTTP.Request)
     post_status_update(status = gentext)
   end
 
-  return gentext
+  return HTTP.Response(200, gentext)
 end
 
 # /reply
@@ -134,13 +134,13 @@ function reply(req::HTTP.Request)
   params = HTTP.queryparams(parse(HTTP.URI, req.target))
 
   println( params["t"] )
-  @time gentext = markovtext(140, String(params["t"])) * "\n"
+  @time gentext = markovtext(135, String(params["t"])) * "\n"
 
   if params["p"] == "1"
-    post_status_update(status = gentext)
+    post_status_update(status = "@tos \n" * gentext)
   end
 
-  return gentext
+  return HTTP.Response(200, gentext)
 end
 
 # /dictionary
