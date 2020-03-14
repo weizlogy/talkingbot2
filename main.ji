@@ -99,7 +99,10 @@ function corpus2Dic()
     lines = split(tweet, "\n")
 
     for index2 in 1:length(lines)
-      createDic(gDict, lines[index2])
+      sentences = split(lines[index2], "。")
+      for index3 in 1:length(sentences)
+        createDic(gDict, sentences[index3])
+      end
     end
   end
 end
