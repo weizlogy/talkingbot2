@@ -95,11 +95,14 @@ end
 function corpus2Dic()
   @time for tweet in eachline("corpus.txt")
     # tweet = corpus[index]
-    tweet = replace(tweet, r"(https?://t.co/[a-zA-Z]+)|(@.+? )|(ξ.+?Ҙ)|([ -/:-@\[-~])" => "")
+    tweet = replace(tweet, r"(https?://t.co/[a-z0-9A-Z]+)|(@.+? )|(ξ.+?Ҙ)|([ -/:-@\[-~])" => "")
     lines = split(tweet, "\n")
 
     for index2 in 1:length(lines)
-      createDic(gDict, lines[index2])
+      sentences = split(lines[index2], "。")
+      for index3 in 1:length(sentences)
+        createDic(gDict, sentences[index3])
+      end
     end
   end
 end
@@ -133,11 +136,12 @@ end
 function reply(req::HTTP.Request)
   params = HTTP.queryparams(parse(HTTP.URI, req.target))
 
-  println( params["t"] )
-  @time gentext = markovtext(135, String(params["t"])) * "\n"
+  text = String(params["t"])
+  println( text )
+  @time gentext = markovtext(100, text) * "\n"
 
   if params["p"] == "1"
-    post_status_update(status = "@tos \n" * gentext)
+    post_status_update(status = "@tos \n" * text * " -> " * gentext)
   end
 
   return HTTP.Response(200, gentext)
