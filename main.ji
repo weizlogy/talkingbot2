@@ -68,7 +68,7 @@ function markovtext(maxchlen::Integer, key::String)
     keytext = rand(collect(dict[keytext]))
     print("[$(keytext)] -> ")
 
-    if keytext == "EOS"
+    if keytext == "EOS" || keytext == "。"
       println("")
       break
     end
@@ -82,7 +82,7 @@ function markovtext(maxchlen::Integer, key::String)
 
     println("[$(valuetext)]")
 
-    if valuetext == "EOS"
+    if valuetext == "EOS" || valuetext == "。"
       #break
     end
   end
@@ -98,11 +98,8 @@ function corpus2Dic()
     tweet = replace(tweet, r"(https?://t.co/[a-z0-9A-Z]+)|(@.+? )|(ξ.+?Ҙ)|([ -/:-@\[-~])" => "")
     lines = split(tweet, "\n")
 
-    for index2 in 1:length(lines)
-      sentences = split(lines[index2], "。")
-      for index3 in 1:length(sentences)
-        createDic(gDict, sentences[index3])
-      end
+    for index in 1:length(lines)
+      createDic(gDict, lines[index])
     end
   end
 end
@@ -119,7 +116,7 @@ twitterauth(ENV["CONSUMER_KEY"], ENV["CONSUMER_SECRET"], ENV["ACCESS_TOKEN"], EN
 function mcmc(req::HTTP.Request)
   params = HTTP.queryparams(parse(HTTP.URI, req.target))
 
-  @time gentext = markovtext(140, "BOS") * "\n"
+  @time gentext = markovtext(130, "BOS") * "\n"
 
   if params["p"] == "1"
     println("tweet")
