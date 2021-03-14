@@ -95,7 +95,7 @@ end
 function corpus2Dic()
   @time for tweet in eachline("corpus.txt")
     # tweet = corpus[index]
-    tweet = replace(tweet, r"(https?://t.co/[a-z0-9A-Z]+)|(@.+? )|(ξ.+?Ҙ)|([ -/:-@\[-~])" => "")
+    tweet = replace(tweet, r"(https?://t.co/[a-z0-9A-Z]+)|(@.+? )|(ξ.+?Ҙ)|([ -/:-@\[-~])|([ｦ-ﾟ])" => "")
     lines = split(tweet, "\n")
 
     for index in 1:length(lines)
