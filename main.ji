@@ -112,11 +112,16 @@ twitterauth(ENV["CONSUMER_KEY"], ENV["CONSUMER_SECRET"], ENV["ACCESS_TOKEN"], EN
 # /mcmc
 # QUERYPARAMS
 #  p: post tweet
-#  l: load dictionary
+#  l: word limit
 function mcmc(req::HTTP.Request)
   params = HTTP.queryparams(parse(HTTP.URI, req.target))
 
-  @time gentext = markovtext(130, "BOS") * "\n"
+  limit = 130
+  if (params["l"])
+    limit = parse(Int64, params["l"])
+  end
+
+  @time gentext = markovtext(limit, "BOS") * "\n"
 
   if params["p"] == "1"
     println("tweet")
@@ -135,10 +140,18 @@ function reply(req::HTTP.Request)
 
   text = String(params["t"])
   println( text )
-  @time gentext = markovtext(100, text) * "\n"
+
+  prefix = "@tos \n"
+  connection = " -> "
+
+  limit = 140 - length(prefix) - length(connection) - 1
+  gentext = "too long input."
+  if (limit > 0)
+    @time gentext = markovtext(limit, text) * "\n"
+  end
 
   if params["p"] == "1"
-    post_status_update(status = "@tos \n" * text * " -> " * gentext)
+    post_status_update(status = prefix * text * connection * gentext)
   end
 
   res = HTTP.Response(200, gentext)
