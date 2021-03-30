@@ -58,8 +58,17 @@ function markovtext(maxchlen::Integer, key::String)
 
   println("[$(keytext)] -> [$(valuetext)]")
 
-  while length(outtext) < maxchlen
+  println("maxchlen = $(maxchlen)")
+
+  while true
     outtext = outtext * keytext
+    println("length) = $(length(outtext)) > $(maxchlen)")
+    println("$( length(outtext) > maxchlen )")
+
+    if length(outtext) > maxchlen
+      println("Text length limitation.")
+      break
+    end
 
     if haskey(dict, keytext) == false
       println("[$(keytext)] not found...")
@@ -117,8 +126,9 @@ function mcmc(req::HTTP.Request)
   params = HTTP.queryparams(parse(HTTP.URI, req.target))
 
   limit = 130
-  if (params["l"])
+  if haskey(params, "l") == true
     limit = parse(Int64, params["l"])
+    println( "limit = $(limit)" )
   end
 
   @time gentext = markovtext(limit, "BOS") * "\n"
