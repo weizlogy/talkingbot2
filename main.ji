@@ -145,6 +145,7 @@ end
 # QUERYPARAMS
 #  p: post tweet
 #  t: text
+#  l: word limit
 function reply(req::HTTP.Request)
   params = HTTP.queryparams(parse(HTTP.URI, req.target))
 
@@ -154,14 +155,19 @@ function reply(req::HTTP.Request)
   prefix = "@tos \n"
   connection = " -> "
 
-  limit = 140 - length(prefix) - length(connection) - 1
-  gentext = "too long input."
-  if (limit > 0)
-    @time gentext = markovtext(limit, text) * "\n"
+  limit = 140
+  if haskey(params, "l") == true
+    limit = parse(Int64, params["l"])
+    println( "limit = $(limit)" )
   end
+  @time gentext = markovtext(limit, text) * "\n"
 
   if params["p"] == "1"
-    post_status_update(status = prefix * text * connection * gentext)
+    reply = prefix * text * connection * gentext
+    if (length(reply) > 140)
+      reply = prefix * gentext
+    end
+    post_status_update(status = reply)
   end
 
   res = HTTP.Response(200, gentext)
