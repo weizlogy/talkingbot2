@@ -138,7 +138,9 @@ function mcmc(req::HTTP.Request)
     post_status_update(status = gentext)
   end
 
-  return HTTP.Response(200, gentext)
+  res = HTTP.Response(200, gentext)
+  push!(res.headers, "Access-Control-Allow-Origin" => "*")
+  return res
 end
 
 # /reply
