@@ -84,9 +84,7 @@ function markovtext(maxchlen::Integer, key::String)
     end
 
     # 終端探し
-    if keytext == "EOS" || keytext == "。"
-      || keytext == "！" || keytext == "？"
-      || brackets > 1
+    if keytext == "EOS" || keytext == "。" || keytext == "！" || keytext == "？" || brackets > 1
       println("")
       break
     end
