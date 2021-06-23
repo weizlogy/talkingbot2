@@ -60,6 +60,7 @@ function markovtext(maxchlen::Integer, key::String)
 
   println("maxchlen = $(maxchlen)")
 
+  brackets = 0
   while true
     outtext = outtext * keytext
     println("length) = $(length(outtext)) > $(maxchlen)")
@@ -77,7 +78,15 @@ function markovtext(maxchlen::Integer, key::String)
     keytext = rand(collect(dict[keytext]))
     print("[$(keytext)] -> ")
 
+    # 括弧は一つにしたい
+    if keytext == "（" || keytext == "("
+      brackets = brackets + 1
+    end
+
+    # 終端探し
     if keytext == "EOS" || keytext == "。"
+      || keytext == "！" || keytext == "？"
+      || brackets > 1
       println("")
       break
     end
