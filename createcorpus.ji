@@ -32,7 +32,7 @@ if length(timeline) > 0
 end
 
 # 不要なもののフィルター
-filter!(x -> x.source != "<a href=\"https://codepen.io/weizlogy/full/LgjJYb\" rel=\"nofollow\">Talking with Alpaca</a>" && !x.retweeted && !startswith(x.full_text, "@tos"), timeline)
+filter!(x -> x.source != "<a href=\"https://codepen.io/weizlogy/full/LgjJYb\" rel=\"nofollow\">Talking with Alpaca</a>" && !x.retweeted && !startswith(x.full_text, "@tos" && !startswith(x.full_text, "@pr"), timeline)
 # 
 corpus = (x -> x.full_text).(timeline)
 

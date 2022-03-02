@@ -142,6 +142,7 @@ function mcmc(req::HTTP.Request)
 
   if params["p"] == "1"
     println("tweet")
+    gentext = "@pr \n" * gentext
     post_status_update(status = gentext)
   end
 
@@ -161,7 +162,7 @@ function reply(req::HTTP.Request)
   text = String(params["t"])
   println( text )
 
-  prefix = "@tos \n"
+  prefix = "@pr \n"
   connection = " -> "
 
   limit = 140
